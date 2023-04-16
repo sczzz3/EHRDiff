@@ -20,10 +20,7 @@ First, you need to preprocess the EHR data into a binary matrix, which serves as
 Then start training by:
 
 ```bash
-python main.py --data_file "path to the preprocessed file"
-							 --ehr_dim 1782
-							 --mlp_dims 1024 384 384 384 1024
-							 ...
+python main.py --data_file "path to the preprocessed file" --ehr_dim 1782 --mlp_dims 1024 384 384 384 1024
 ```
 
 The `figs` directory contatins plots of dimension-wise probability and `logs` directory contatins training logs, both of which help to moniter the training process.
