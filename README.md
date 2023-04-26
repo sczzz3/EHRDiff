@@ -9,7 +9,7 @@ Currently the repo contains the code for the experiment of binary EHR data (MIMI
 - Install the dependencies by:
 
 ```bash
-conda create -n seqdiffuseq python=3.8
+conda create -n ehrdiff python=3.8
 pip install torch==1.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
 pip install -r requirements.txt
 ```
