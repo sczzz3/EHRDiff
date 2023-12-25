@@ -17,6 +17,18 @@ pip install -r requirements.txt
 # Training
 
 First, you need to preprocess the EHR data into a binary matrix, which serves as the input of the diffusion model. 
+
+For the MIMIC data, we put our processed data to this [link](https://drive.google.com/file/d/1A0E2-JU7KKb7jkMJNtZqikGyHO37-45R/view?usp=share_link) for open access and reproducing our results. Please note that the data is generated from the original MIMIC data, and if you use our processed data, do follow MIMIC's license and cite the original MIMIC source. We truncate the original ICD9 code in MIMIC following this Python code snippet:
+```python
+def convert_to_3digit_icd9(dxStr):
+    if dxStr.startswith('E'):
+        if len(dxStr) > 4: return dxStr[:4]
+        else: return dxStr
+    else:
+        if len(dxStr) > 3: return dxStr[:3]
+        else: return dxStr
+```
+
 Then start training by:
 
 ```bash
