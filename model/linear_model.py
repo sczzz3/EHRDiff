@@ -70,16 +70,13 @@ class LinearModel(nn.Module):
         self.block_in = Block(dim_in=z_dim, dim_out=unit_dims[0], time_emb_dim=time_dim)
         self.block_mid = nn.ModuleList()
         for i in range(num_linears-1):
-            # self.block_mid.append(Block(dim_in=unit_dims[i], dim_out=unit_dims[i+1]))
             self.block_mid.append(Block(dim_in=unit_dims[i], dim_out=unit_dims[i+1], time_emb_dim=time_dim))
-        # self.block_out = Block(dim_in=unit_dims[-1], dim_out=z_dim)
         self.block_out = Block(dim_in=unit_dims[-1], dim_out=z_dim, time_emb_dim=time_dim)
 
         ### Classifier-free 
         self.label_dim = num_classes
         self.use_cfg = use_cfg
         if use_cfg:
-            # self.class_emb = nn.Embedding(num_classes, class_dim)
             self.class_emb = nn.Embedding(self.label_dim if not use_cfg else self.label_dim + 1, class_dim)
             self.class_mlp = nn.Sequential(
                 nn.Linear(class_dim, time_dim),
