@@ -1,0 +1,63 @@
+setup:
+  runner: train_dpdm_base
+  n_gpus_per_node: 1
+  n_nodes: 1
+  node_rank: 0
+  master_address: '127.0.0.1'
+  master_port: 60202
+  omp_n_threads: 64
+data:
+  path: ""
+  name: cinc
+  resolution: 114
+  dataloader_params:
+    num_workers: 1
+  n_classes: 2
+model:
+  denoiser_name: edm
+  denoiser_network: song
+  sigma_data: 0.03
+  ema_rate: .999
+  network:
+    z_dim: 114
+    time_dim: 128
+    unit_dims: [512, 768, 1024, 768, 512]
+    random_fourier_features: True
+    learned_sinusoidal_dim: 32
+    use_cfg: True
+    num_classes: 2
+    class_dim: 128
+optim:
+  optimizer: AdamW
+  params:
+    lr: 1e-4
+    weight_decay: 0.
+sampler:
+  type: edm
+  stochastic: False
+  num_steps: 32
+  tmin: .02
+  tmax: 80.
+  rho: 7.
+  guid_scale: 0.
+  snapshot_batch_size: 4000
+train:
+  seed: 2023
+  batch_size: 256
+  warmup_steps: 20000
+  n_epochs: 5000
+  check_freq: 5000
+loss: 
+  version: edm
+  p_mean: -1.2
+  p_std: 1.2
+  sigma_data: 0.03
+  label_unconditioning_prob: 0.1
+  n_classes: 2
+dp:
+  do: False
+  max_grad_norm: 1.
+  delta: 1e-5
+  epsilon: 10.
+  max_physical_batch_size: 512
+  n_splits: 4

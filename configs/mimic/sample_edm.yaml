@@ -1,0 +1,42 @@
+setup:
+  runner: generate_base
+  CUDA_DEVICES: 0
+  n_gpus_per_node: 1
+  n_nodes: 1
+  node_rank: 0
+  master_address: '127.0.0.1'
+  master_port: 60202
+  omp_n_threads: 64
+data:
+  resolution: 1782
+  n_classes: None
+model:
+  ckpt: ".../checkpoints/final_checkpoint.pth"
+  denoiser_name: edm
+  denoiser_network: song
+  ema_rate: .999
+  use_ema: True
+  params:
+    sigma_data: 0.14
+    sigma_min: .02
+    sigma_max: 80.
+  network:
+    z_dim: 1782
+    time_dim: 384
+    unit_dims: [1024, 384, 384, 384, 1024]
+    use_cfg: False
+sampler:
+  solver: 'heun'
+  discretization: 'edm'
+  stochastic: False
+  num_steps: 32
+  sigma_min: .02
+  sigma_max: 80.
+  rho: 7.
+  guid_scale: None
+test:
+  type: 'binary'
+  labels: None
+  batch_size: 41000
+  n_samples: 41000
+  seed: 2023

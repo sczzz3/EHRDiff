@@ -1,92 +1,116 @@
-
 import logging
+import os
+import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+import sys
 import argparse
+from omegaconf import OmegaConf
+from utils.util import make_dir
+try:
+    mp.set_start_method('spawn')
+except RuntimeError:
+    pass
 
-from train_util import set_seed, train_diff
+
+def run_main(config):
+    ###
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(config.setup.CUDA_DEVICES)
+    ###
+    processes = []
+    for rank in range(config.setup.n_gpus_per_node):
+        config.setup.local_rank = rank
+        config.setup.global_rank = rank + \
+            config.setup.node_rank * config.setup.n_gpus_per_node
+        config.setup.global_size = config.setup.n_nodes * config.setup.n_gpus_per_node
+        # print('Node rank %d, local proc %d, global proc %d' % (
+        #     config.setup.node_rank, config.setup.local_rank, config.setup.global_rank))
+        p = mp.Process(target=setup, args=(config, main))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
 
 
-def main():
-    
+def setup(config, fn):
+    os.environ['MASTER_ADDR'] = config.setup.master_address
+    os.environ['MASTER_PORT'] = '%d' % config.setup.master_port
+    os.environ['OMP_NUM_THREADS'] = '%d' % config.setup.omp_n_threads
+    torch.cuda.set_device(config.setup.local_rank)
+    dist.init_process_group(backend='nccl',
+                            init_method='env://',
+                            rank=config.setup.global_rank,
+                            world_size=config.setup.global_size)
+    fn(config)
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def set_logger(gfile_stream):
+    handler = logging.StreamHandler(gfile_stream)
+    formatter = logging.Formatter(
+        '%(levelname)s - %(filename)s - %(asctime)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger = logging.getLogger()
+    logger.addHandler(handler)
+    logger.setLevel('INFO')
+
+
+def main(config):
+    workdir = os.path.join(config.setup.root_folder, config.setup.workdir)
+
+    if config.setup.mode == 'train':
+        if config.setup.global_rank == 0:
+            if config.setup.mode == 'train':
+                make_dir(workdir)
+                gfile_stream = open(os.path.join(workdir, 'stdout.txt'), 'w')
+            else:
+                if not os.path.exists(workdir):
+                    raise ValueError('Working directoy does not exist.')
+                gfile_stream = open(os.path.join(workdir, 'stdout.txt'), 'a')
+
+            set_logger(gfile_stream)
+            logging.info(config)
+
+        if config.setup.runner == 'train_dpdm_base':
+            from runners import train_dpdm_base
+            train_dpdm_base.training(config, workdir, config.setup.mode)
+        else:
+            raise NotImplementedError('Runner is not yet implemented.')
+
+    elif config.setup.mode == 'eval':
+        if config.setup.global_rank == 0:
+            make_dir(workdir)
+            gfile_stream = open(os.path.join(workdir, 'stdout.txt'), 'w')
+            set_logger(gfile_stream)
+            logging.info(config)
+
+        if config.setup.runner == 'generate_base':
+            from runners import generate_base
+            generate_base.evaluation(config, workdir)
+        else:
+            raise NotImplementedError('Runner is not yet implemented.')
+
+
+if __name__ == '__main__':
+    sys.path.append(os.getcwd())
     parser = argparse.ArgumentParser()
+    parser.add_argument('--config', nargs="*", default=list(), required=True)
+    parser.add_argument('--workdir', required=True)
+    parser.add_argument('--mode', choices=['train', 'eval'], required=True)
+    parser.add_argument('--root_folder', default='.')
+    opt, unknown = parser.parse_known_args()
 
-    parser.add_argument("--seed", type=int, default=2023,
-                    help="random seed for initialization")
+    configs = [OmegaConf.load(cfg) for cfg in opt.config]
+    cli = OmegaConf.from_dotlist(unknown)
+    config = OmegaConf.merge(*configs, cli)
 
-    parser.add_argument(
-        "--data_file",
-        default='proc_data/mimic/mimic1782_train.npy',
-        type=str,
-        help="Path to the file of preprocessed EHRs data",
-    )
+    config.setup.workdir = opt.workdir
+    config.setup.mode = opt.mode
+    config.setup.root_folder = opt.root_folder
 
-    parser.add_argument("--check_steps", default=5000, type=int,
-                    help="the interval for printing the training loss, *batch")
-    parser.add_argument("--num_epochs", default=5000, type=int,
-                    help="number of epochs for model training")
-    parser.add_argument("--batch_size", default=1024, type=int,
-                    help="batch size")    
-    parser.add_argument("--if_shuffle", default=True, type=bool,
-                    help="parameter for the dataloader")    
-    parser.add_argument("--if_drop_last", default=True, type=bool,
-                    help="parameter for the dataloader")  
-    parser.add_argument("--device", default="cuda:0", type=str,
-                    help="device assigned for modeling")    
+    if config.setup.n_nodes > 1:
+        raise NotImplementedError('This has not been tested.')
 
-    parser.add_argument("--ehr_dim", default=1782, type=int,
-                    help="data dimension of EHR data") 
-    parser.add_argument("--time_dim", default=384, type=int,
-                    help="dimension of time embedding") 
-    parser.add_argument("--mlp_dims", nargs='+', default=[1024, 384, 384, 384, 1024], type=int,
-                    help="hidden dims for the mlp backbone") 
-
-    
-    parser.add_argument("--sigma_data", default=0.14, type=float,
-                    help="init parameters for sigma_data") 
-    parser.add_argument("--p_mean", default=-1.2, type=float,
-                    help="init parameters for p_mean") 
-    parser.add_argument("--p_std", default=1.2, type=float,
-                    help="init parameters for p_std") 
-
-    parser.add_argument("--num_sample_steps", default=32, type=int,
-                    help="init parameters for number of discretized time steps") 
-    parser.add_argument("--sigma_min", default=0.02, type=float,
-                    help="init parameters for sigma_min") 
-    parser.add_argument("--sigma_max", default=80, type=float,
-                    help="init parameters for sigma_max") 
-    parser.add_argument("--rho", default=7, type=float,
-                    help="init parameters for rho") 
-
-    parser.add_argument("--lr", default=3e-4, type=float,
-                    help="learning_rate")  
-    parser.add_argument("--warmup_steps", default=20000, type=int,
-                    help="warmup portion for the 'get_linear_schedule_with_warmup'")  
-    parser.add_argument("--weight_decay", default=0., type=float,
-                    help="weigth decay value for the optimizer")   
-    
-    parser.add_argument("--eval_samples", default=41000, type=int,
-                    help="number of samples wanted for evaluation") 
-
-    args = parser.parse_args()    
-
-    model_setting = 'sigma_data' + str(args.sigma_data) + '|' + \
-                    'p_mean' + str(args.p_mean) + '|' + \
-                    'p_std' + str(args.p_std) + '|' + \
-                    'steps' + str(args.num_sample_steps) + '|' + \
-                    'sigma_min' + str(args.sigma_min) + '|' + \
-                    'sigma_max' + str(args.sigma_max) + '|' + \
-                    'rho' + str(args.rho)
-
-    args.model_setting = model_setting
-    logging.basicConfig(
-            # filename='logs/' + model_setting + '.log',
-            filename='logs/' + 'trial.log',
-            level=logging.INFO,
-            filemode='w',
-            format='%(name)s - %(levelname)s - %(message)s'
-                )
-
-    set_seed(args.seed)
-    train_diff(args)
-
-if __name__=='__main__':
-    main()
+    run_main(config)

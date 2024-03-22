@@ -1,0 +1,60 @@
+setup:
+  runner: train_dpdm_base
+  CUDA_DEVICES: 0
+  n_gpus_per_node: 1
+  n_nodes: 1
+  node_rank: 0
+  master_address: '127.0.0.1'
+  master_port: 60202
+  omp_n_threads: 64
+data:
+  path: ""
+  name: ecg
+  resolution: 188
+  dataloader_params:
+    num_workers: 1
+  n_classes: None
+model:
+  denoiser_name: edm
+  denoiser_network: song
+  ema_rate: .999
+  params:
+    sigma_data: 0.003
+    sigma_min: .02
+    sigma_max: 80.
+  network:
+    z_dim: 188
+    time_dim: 128
+    unit_dims: [512, 768, 1024, 768, 512]
+    use_cfg: False
+    random_fourier_features: True
+    learned_sinusoidal_dim: 32
+optim:
+  optimizer: AdamW
+  params:
+    lr: 3e-4
+    weight_decay: 0.
+sampler:
+  solver: 'heun'
+  discretization: 'edm'
+  stochastic: False
+  num_steps: 32
+  sigma_min: .02
+  sigma_max: 80.
+  rho: 7.
+  guid_scale: None
+train:
+  seed: 2027
+  batch_size: 256
+  warmup_steps: 20000
+  n_epochs: 5000
+  check_freq: 5000
+  save_freq: 20000
+loss: 
+  version: edm
+  p_mean: -1.2
+  p_std: 1.2
+  sigma_data: 0.003
+  n_classes: None
+dp:
+  do: False

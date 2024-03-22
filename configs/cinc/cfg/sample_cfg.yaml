@@ -1,0 +1,41 @@
+setup:
+  runner: generate_base
+  n_gpus_per_node: 1
+  n_nodes: 1
+  node_rank: 0
+  master_address: '127.0.0.1'
+  master_port: 60202
+  omp_n_threads: 64
+data:
+  resolution: 114
+  n_classes: 2
+model:
+  ckpt: ""
+  denoiser_name: edm
+  denoiser_network: song
+  sigma_data: 0.03
+  ema_rate: .999
+  use_ema: True
+  network:
+    z_dim: 114
+    time_dim: 128
+    unit_dims: [512, 768, 1024, 768, 512]
+    random_fourier_features: True
+    learned_sinusoidal_dim: 32
+    use_cfg: True
+    num_classes: 2
+    class_dim: 128
+sampler:
+  type: edm
+  stochastic: False
+  num_steps: 32
+  tmin: .02
+  tmax: 80.
+  rho: 7.
+  guid_scale: 0.
+  batch_size: 512
+  labels: 2
+test:
+  type: 'continuous'
+  n_samples: 4000
+  seed: 2023

@@ -1,16 +1,13 @@
-# EHRDiff
+# EHRDiff [TMLR]
 
-This is the official code base for paper: ["EHRDiff: Exploring Realistic EHR Synthesis with Diffusion Models
-"](https://arxiv.org/abs/2303.05656).
+This is the official code base for paper: ["EHRDiff: Exploring Realistic EHR Synthesis with Diffusion Models"](https://arxiv.org/abs/2303.05656).
 
-Currently the repo contains the code for the experiment of binary EHR data (MIMIC). Codes for other types of EHR data will be released soon.
 
 # Requirements
 - Install the dependencies by:
 
 ```bash
-conda create -n ehrdiff python=3.8
-pip install torch==1.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
+conda create -n ehrdiff python=3.9
 pip install -r requirements.txt
 ```
 
@@ -29,13 +26,17 @@ def convert_to_3digit_icd9(dxStr):
         else: return dxStr
 ```
 
-Then start training by:
 
+Adjust the data path and parameter setting in the corresponding config file and then start training by:
 ```bash
-python main.py --data_file "path to the preprocessed file" --ehr_dim 1782 --mlp_dims 1024 384 384 384 1024
+python main.py --mode train --workdir <new_directory> --config <config_file>
+```
+Adjust the checkpoint path and parameter setting and then you can do sampling by running:
+```bash
+python main.py --mode eval --workdir <new_directory> --config <config_file>
 ```
 
-The `figs` directory contatins plots of dimension-wise probability and `logs` directory contatins training logs, both of which help to moniter the training process.
+Note that we modify the code from the DPDM repo, with which we attempt to equip the model with the ability of differential privacy. In our preliminary experiments, we found it to be effective for the Cinc dataset, while it is hard to adjust for MIMIC data which may be due to the high-dimension problem commonly concerned with differential privacy.
 
 # Citation
 
@@ -51,4 +52,5 @@ The `figs` directory contatins plots of dimension-wise probability and `logs` di
 ```
 
 # Acknowledgements
-Parts of our codes are modified from [lucidrains/denoising-diffusion-pytorch repo](https://github.com/lucidrains/denoising-diffusion-pytorch).
+Parts of our codes are modified from [DPDM](https://github.com/nv-tlabs/DPDM) and [edm](https://github.com/NVlabs/edm).
+
