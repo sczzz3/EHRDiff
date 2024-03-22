@@ -123,11 +123,7 @@ def evaluation(config, workdir):
 
     all_labels = []
     all_x = []
-    # for _ in range(config.test.n_samples // (sampling_shape[0] * config.setup.global_size) + 1):
-    #     counter, x, labels = sample_batch(counter, config.test.n_samples, sampler,
-    #                                    sampling_shape, config.setup.device, config.test.labels, config.data.n_classes)
-    #     all_labels.append(labels)
-    #     all_x.append(x)
+
     counter, x, labels = sample_batch(counter, config.test.n_samples, sampler,
                                     sampling_shape, config.setup.device, config.test.labels, config.data.n_classes)
     all_labels.append(labels)
@@ -151,8 +147,6 @@ def evaluation(config, workdir):
             :config.test.n_samples].to('cpu')
         
         if config.setup.global_rank == 0:
-            # torch.save(all_labels_across_all_gpus,
-            #            os.path.join(sample_dir, 'all_labels.pt'))
             all_x_across_all_gpus = all_x_across_all_gpus.numpy()
             if config.test.type == 'binary':
                 all_x_across_all_gpus = np.rint(np.clip(all_x_across_all_gpus, 0, 1))
@@ -186,7 +180,4 @@ def evaluation(config, workdir):
             np.save(os.path.join(sample_dir, 'all_x'),
                     all_x_across_all_gpus)
             
-            ###
-            # np.save('saved_skips', np.array(torch.as_tensor(model.module.skip).cpu()))
-            ###
         dist.barrier()        
