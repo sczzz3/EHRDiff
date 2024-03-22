@@ -97,10 +97,8 @@ class LinearModel(nn.Module):
         num_mid_blocks = len(self.block_mid)
         if num_mid_blocks > 0:
             for block in self.block_mid:
-                # x = block(x)
                 x = block(x, t_emb)
 
-        # x = self.block_out(x)
         x = self.block_out(x, t_emb)
         return x
 
