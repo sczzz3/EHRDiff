@@ -36,7 +36,7 @@ Adjust the checkpoint path and parameter setting and then you can do sampling by
 python main.py --mode eval --workdir <new_directory> --config <config_file>
 ```
 
-Note that we modify the code from the DPDM repo, with which we attempt to equip the model with the ability of differential privacy. In our preliminary experiments, we found it to be effective for the Cinc dataset, while it is hard to adjust for MIMIC data which may be due to the high-dimension problem commonly concerned with differential privacy.
+Note that we modify the code from the DPDM repo, with which we attempt to equip the model with the ability of differential privacy. In our preliminary experiments, we found it to be effective for the CinC dataset, while it is hard to adjust for MIMIC data which may be due to the high-dimension problem commonly concerned with differential privacy.
 
 # Citation
 
