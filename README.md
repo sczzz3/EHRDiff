@@ -11,7 +11,7 @@ conda create -n ehrdiff python=3.9
 pip install -r requirements.txt
 ```
 
-# Training
+# Usage
 
 First, you need to preprocess the EHR data into a binary matrix, which serves as the input of the diffusion model. 
 
