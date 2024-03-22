@@ -7,7 +7,7 @@ import torch.distributed as dist
 # import PIL
 # from torchvision.utils import make_grid
 from scipy import linalg
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 from pathlib import Path
 
 # from dataset_tool import is_image_ext
@@ -77,7 +77,7 @@ def plot_dim_dist(train_data, syn_data, save_dir):
     train_data_mean = np.mean(train_data, axis = 0)
     temp_data_mean = np.mean(syn_data, axis = 0)
 
-    corr = spearmanr(temp_data_mean, train_data_mean)
+    corr = pearsonr(temp_data_mean, train_data_mean)
     nzc = sum(temp_data_mean[i] > 0 for i in range(temp_data_mean.shape[0]))
     
     fig, ax = plt.subplots(figsize=(8, 6))
