@@ -41,13 +41,15 @@ Note that we modify the code from the DPDM repo, with which we attempt to equip 
 # Citation
 
 ```bibtex
-@article{ehrdiff,
-  doi = {10.48550/ARXIV.2303.05656},
-  url = {https://arxiv.org/abs/2303.05656},
-  author = {Yuan, Hongyi and Zhou, Songchi and Yu, Sheng},
-  title = {EHRDiff: Exploring Realistic EHR Synthesis with Diffusion Models},
-  publisher = {arXiv},
-  year = {2023}
+@article{
+yuan2024ehrdiff,
+title={{EHRD}iff : Exploring Realistic {EHR} Synthesis with Diffusion Models},
+author={Hongyi Yuan and Songchi Zhou and Sheng Yu},
+journal={Transactions on Machine Learning Research},
+issn={2835-8856},
+year={2024},
+url={https://openreview.net/forum?id=DIGkJhGeqi},
+note={}
 }
 ```
 
